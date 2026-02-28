@@ -1,0 +1,37 @@
+name: Sync Cloudflare IP Ranges
+
+on:
+  schedule:
+    # 每周一 UTC 04:00（北京时间 12:00）自动同步
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Cloudflare IP ranges
+        run: |
+          curl -sL --fail --retry 3 https://www.cloudflare.com/ips-v4/ -o ip.txt
+          curl -sL --fail --retry 3 https://www.cloudflare.com/ips-v6/ -o ipv6.txt
+
+      - name: Validate files
+        run: |
+          if [ ! -s ip.txt ]; then echo "ip.txt is empty"; exit 1; fi
+          if [ ! -s ipv6.txt ]; then echo "ipv6.txt is empty"; exit 1; fi
+          echo "ip.txt: $(wc -l < ip.txt) lines"
+          echo "ipv6.txt: $(wc -l < ipv6.txt) lines"
+
+      - name: Commit if changed
+        run: |
+          git diff --quiet ip.txt ipv6.txt && echo "No changes" && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ip.txt ipv6.txt
+          git commit -m "sync: update Cloudflare IP ranges $(date +%Y-%m-%d)"
+          git push
