@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download Cloudflare IP ranges
+      - name: 更新 Cloudflare IP 文件
         run: |
           curl -sL --fail --retry 3 https://www.cloudflare.com/ips-v4/ -o ip.txt
           curl -sL --fail --retry 3 https://www.cloudflare.com/ips-v6/ -o ipv6.txt
